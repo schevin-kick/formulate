@@ -14,6 +14,7 @@ function RenderSelect(fieldData, fieldValidators, cssClasses) {
         cssClasses: cssClasses
     });
     this.addOptions(fieldData);
+    this.addEvents(fieldData);
 }
 
 /**
@@ -100,6 +101,44 @@ RenderSelect.prototype.checkValidity = function () {
     return require("../utils/validation")
         .checkTextValidity(this, this.validators, this.element.value, this.wrapper);
 };
+
+/**
+ * Wireup events to the select element
+ * @param fieldData The field data that should be used to render the drop down field.
+ */
+RenderSelect.prototype.addEvents = function(fieldData){
+    const category = fieldData.category;
+    let node = this.element.parentElement;
+    this.element.addEventListener('change', function(e){
+        for(;;){
+            if(node.nodeName === "FORM"){
+                const data = {
+                    category: category,
+                    event: e,
+                    element: this 
+                };
+                const eventName="formulate: select option changed";
+        
+                if (typeof window.CustomEvent === "function") {
+                    event = new CustomEvent(eventName, {
+                        bubbles: true,
+                        detail: data
+                    });
+                    node.dispatchEvent(event);
+            
+                } else {
+                    event = document.createEvent("CustomEvent");
+                    event.initCustomEvent(eventName, true, false, data);
+                    node.dispatchEvent(event);
+                }
+                return;
+            }
+            else{
+                node = node.parentElement;
+            }
+        } 
+    });
+}
 
 /**
  * Ensure the prototype has the necessary functions.
